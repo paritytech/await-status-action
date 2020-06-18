@@ -6364,7 +6364,7 @@ function updateCurrentStatuses(currentStatuses, data) {
 exports.updateCurrentStatuses = updateCurrentStatuses;
 function getCurrentStatuses(inputs, octokit, currentStatuses) {
     return __awaiter(this, void 0, void 0, function* () {
-        return updateCurrentStatuses(currentStatuses, (yield octokit.repos.listStatusesForRef({
+        return updateCurrentStatuses(currentStatuses, (yield octokit.repos.getCombinedStatusForRef({
             owner: inputs.owner,
             repo: inputs.repository,
             ref: inputs.ref

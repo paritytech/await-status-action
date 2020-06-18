@@ -1,4 +1,4 @@
-import { ListStatusesForRefResponse } from '../types';
+import { GetCombinedStatusForRef } from '../types';
 import { NOT_PRESENT } from '../constants';
 import { Inputs } from '../interfaces/Inputs';
 import { Octokit } from '@octokit/rest';
@@ -27,11 +27,11 @@ export function statusesAllPresent(currentStatuses: CheckStatus) {
     return true;
 }
 
-export function updateCurrentStatuses(currentStatuses: CheckStatus, data: ListStatusesForRefResponse): CheckStatus {
+export function updateCurrentStatuses(currentStatuses: CheckStatus, data: GetCombinedStatusForRef): CheckStatus {
     let result: CheckStatus = {};
     Object.assign(result, currentStatuses);
     for (let i = 0; i < data.statuses.length; i++) {
-        const status = data.status[i];
+        const status = data.statuses[i];
         if (result.hasOwnProperty(status.context)) {
             result[status.context] = status.state;
         }
