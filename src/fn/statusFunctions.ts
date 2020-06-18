@@ -41,7 +41,7 @@ export function updateCurrentStatuses(currentStatuses: CheckStatus, data: ListSt
 
 export async function getCurrentStatuses(inputs: Inputs, octokit: Octokit, currentStatuses: CheckStatus) {
     return updateCurrentStatuses(currentStatuses,
-        (await octokit.repos.listStatusesForRef({
+        (await octokit.repos.getCombinedStatusForRef({
             owner: inputs.owner,
             repo: inputs.repository,
             ref: inputs.ref
