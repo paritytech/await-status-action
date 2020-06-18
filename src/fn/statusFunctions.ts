@@ -45,7 +45,7 @@ export async function getCurrentStatuses(inputs: Inputs, octokit: Octokit, curre
             owner: inputs.owner,
             repo: inputs.repository,
             ref: inputs.ref
-        })).data);
+        })).data.statuses);
 }
 
 export function newCurrentStatuses(contexts: string[]): CheckStatus {
