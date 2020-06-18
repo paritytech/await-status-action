@@ -30,8 +30,8 @@ export function statusesAllPresent(currentStatuses: CheckStatus) {
 export function updateCurrentStatuses(currentStatuses: CheckStatus, data: ListStatusesForRefResponse): CheckStatus {
     let result: CheckStatus = {};
     Object.assign(result, currentStatuses);
-    for (let i = 0; i < data.length; i++) {
-        const status = data[i];
+    for (let i = 0; i < data.statuses.length; i++) {
+        const status = data.status[i];
         if (result.hasOwnProperty(status.context)) {
             result[status.context] = status.state;
         }
@@ -45,7 +45,7 @@ export async function getCurrentStatuses(inputs: Inputs, octokit: Octokit, curre
             owner: inputs.owner,
             repo: inputs.repository,
             ref: inputs.ref
-        })).data.statuses);
+        })).data);
 }
 
 export function newCurrentStatuses(contexts: string[]): CheckStatus {
