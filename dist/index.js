@@ -6353,8 +6353,8 @@ exports.statusesAllPresent = statusesAllPresent;
 function updateCurrentStatuses(currentStatuses, data) {
     let result = {};
     Object.assign(result, currentStatuses);
-    for (let i = 0; i < data.length; i++) {
-        const status = data[i];
+    for (let i = 0; i < data.statuses.length; i++) {
+        const status = data.statuses[i];
         if (result.hasOwnProperty(status.context)) {
             result[status.context] = status.state;
         }
