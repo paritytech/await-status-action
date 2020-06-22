@@ -47,7 +47,9 @@ outputs:
     description: 'number of failing checks'
   failedCheckNames:
     description: "semi-colon separated list of failed checks"
-  failedCheckStates:
+  interruptedCheckNames:
+    description: "semi-colon separated list of interrupted checks"
+  checkStates:
     description: "semi-colon separated list of check results, on timeout will be state or 'not_present'"
 runs:
   using: 'node12'

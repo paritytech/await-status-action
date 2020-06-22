@@ -42,9 +42,8 @@ export class AwaitRunner {
 
         let runOutput: RunOutput = {
             failedCheckNames: [],
-            failedCheckStates: [],
             interruptedCheckNames: [],
-            interruptedCheckStates: []
+            checkStates: []
         }
 
         if (runResult != RunResult.success) {
@@ -52,24 +51,25 @@ export class AwaitRunner {
         }
 
         this.core.setOutput(OUTPUT_NAMES.result, runResult);
+        this.core.setOutput(OUTPUT_NAMES.checkStates, runOutput.checkStates.join(';'));
         this.core.setOutput(OUTPUT_NAMES.numberOfFailedChecks, runOutput.failedCheckNames.length);
-        this.core.setOutput(OUTPUT_NAMES.failedCheckStates, runOutput.failedCheckStates.join(';'));
+        this.core.setOutput(OUTPUT_NAMES.numberOfInterruptedChecks, runOutput.interruptedCheckNames.length);
         this.core.setOutput(OUTPUT_NAMES.failedCheckNames, runOutput.failedCheckNames.join(';'));
+        this.core.setOutput(OUTPUT_NAMES.interruptedCheckNames, runOutput.interruptedCheckNames.join(';'));
     }
 
     private getRunOutput(output:RunOutput, runResult:RunResult) {
         this.inputs.contexts.forEach(element => {
             let curStatus = this.currentStatuses[element]
+            output.checkStates.push(curStatus);
             if (runResult == RunResult.failure){
               if (!this.inputs.completeStates.includes(curStatus) || curStatus == NOT_PRESENT) {
                   output.failedCheckNames.push(element);
-                  output.failedCheckStates.push(curStatus);
               }
             }
             if (runResult == RunResult.interrupted){
               if (!this.inputs.completeStates.includes(curStatus) || curStatus == NOT_PRESENT) {
                   output.interruptedCheckNames.push(element);
-                  output.interruptedCheckStates.push(curStatus);
               }
             }
         });

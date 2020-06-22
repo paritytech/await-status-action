@@ -18,8 +18,7 @@ export const OUTPUT_NAMES = {
     result: "result",
     numberOfFailedChecks: "numberOfFailedChecks",
     failedCheckNames: "failedCheckNames",
-    failedCheckStates: "failedCheckStates",
     numberOfInterruptedChecks: "numberOfInterruptedChecks",
     interruptedCheckNames: "interruptedCheckNames",
-    interruptedCheckStates: "interruptedCheckStates"
+    checkStates: "checkStates"
 }

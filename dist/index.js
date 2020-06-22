@@ -317,10 +317,9 @@ exports.OUTPUT_NAMES = {
     result: "result",
     numberOfFailedChecks: "numberOfFailedChecks",
     failedCheckNames: "failedCheckNames",
-    failedCheckStates: "failedCheckStates",
     numberOfInterruptedChecks: "numberOfInterruptedChecks",
     interruptedCheckNames: "interruptedCheckNames",
-    interruptedCheckStates: "interruptedCheckStates"
+    checkStates: "checkStates"
 };
 
 
@@ -6685,32 +6684,32 @@ class AwaitRunner {
             let runResult = yield this.runLoop();
             let runOutput = {
                 failedCheckNames: [],
-                failedCheckStates: [],
                 interruptedCheckNames: [],
-                interruptedCheckStates: []
+                checkStates: []
             };
             if (runResult != RunResult_1.RunResult.success) {
                 this.getRunOutput(runOutput, runResult);
             }
             this.core.setOutput(constants_1.OUTPUT_NAMES.result, runResult);
+            this.core.setOutput(constants_1.OUTPUT_NAMES.checkStates, runOutput.checkStates.join(';'));
             this.core.setOutput(constants_1.OUTPUT_NAMES.numberOfFailedChecks, runOutput.failedCheckNames.length);
-            this.core.setOutput(constants_1.OUTPUT_NAMES.failedCheckStates, runOutput.failedCheckStates.join(';'));
+            this.core.setOutput(constants_1.OUTPUT_NAMES.numberOfInterruptedChecks, runOutput.interruptedCheckNames.length);
             this.core.setOutput(constants_1.OUTPUT_NAMES.failedCheckNames, runOutput.failedCheckNames.join(';'));
+            this.core.setOutput(constants_1.OUTPUT_NAMES.interruptedCheckNames, runOutput.interruptedCheckNames.join(';'));
         });
     }
     getRunOutput(output, runResult) {
         this.inputs.contexts.forEach(element => {
             let curStatus = this.currentStatuses[element];
+            output.checkStates.push(curStatus);
             if (runResult == RunResult_1.RunResult.failure) {
                 if (!this.inputs.completeStates.includes(curStatus) || curStatus == constants_1.NOT_PRESENT) {
                     output.failedCheckNames.push(element);
-                    output.failedCheckStates.push(curStatus);
                 }
             }
             if (runResult == RunResult_1.RunResult.interrupted) {
                 if (!this.inputs.completeStates.includes(curStatus) || curStatus == constants_1.NOT_PRESENT) {
                     output.interruptedCheckNames.push(element);
-                    output.interruptedCheckStates.push(curStatus);
                 }
             }
         });
