@@ -308,6 +308,7 @@ exports.INPUT_NAMES = {
     pollInterval: "pollInterval",
     completeStates: "completeStates",
     failureStates: "failureStates",
+    interruptedStates: "interruptedStates",
     ref: "ref",
     owner: "owner",
     repository: "repository"
@@ -687,7 +688,8 @@ exports.DEFAULTS = {
     notPresentTimeout: 300,
     pollInterval: 10,
     completeStates: ['success'],
-    failureStates: ['error', 'failure']
+    failureStates: ['error', 'failure'],
+    interruptedStates: []
 };
 function importInputs(testActionsCore = null) {
     var _a;
@@ -700,6 +702,7 @@ function importInputs(testActionsCore = null) {
         pollInterval: getNumber(core, constants_1.INPUT_NAMES.pollInterval, exports.DEFAULTS.pollInterval),
         completeStates: getStringArrayOrDefault(core, constants_1.INPUT_NAMES.completeStates, exports.DEFAULTS.completeStates),
         failureStates: getStringArrayOrDefault(core, constants_1.INPUT_NAMES.failureStates, exports.DEFAULTS.failureStates),
+        interruptedStates: getStringArrayOrDefault(core, constants_1.INPUT_NAMES.interruptedStates, exports.DEFAULTS.interruptedStates),
         ref: getString(core, constants_1.INPUT_NAMES.ref),
         owner: getString(core, constants_1.INPUT_NAMES.owner),
         repository: getString(core, constants_1.INPUT_NAMES.repository)

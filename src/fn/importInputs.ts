@@ -10,7 +10,8 @@ export const DEFAULTS = {
     notPresentTimeout: 300,
     pollInterval: 10,
     completeStates: ['success'],
-    failureStates: ['error', 'failure']
+    failureStates: ['error', 'failure'],
+    interruptedStates: []
 }
 
 export default function importInputs(testActionsCore: any | null = null): Inputs {
@@ -25,6 +26,7 @@ export default function importInputs(testActionsCore: any | null = null): Inputs
         pollInterval: getNumber(core, INPUT_NAMES.pollInterval, DEFAULTS.pollInterval),
         completeStates: getStringArrayOrDefault(core, INPUT_NAMES.completeStates, DEFAULTS.completeStates),
         failureStates: getStringArrayOrDefault(core, INPUT_NAMES.failureStates, DEFAULTS.failureStates),
+        interruptedStates: getStringArrayOrDefault(core, INPUT_NAMES.interruptedStates, DEFAULTS.interruptedStates),
         ref: getString(core, INPUT_NAMES.ref),
         owner: getString(core, INPUT_NAMES.owner),
         repository: getString(core, INPUT_NAMES.repository)

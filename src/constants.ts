@@ -8,6 +8,7 @@ export const INPUT_NAMES = {
     pollInterval: "pollInterval",
     completeStates: "completeStates",
     failureStates: "failureStates",
+    interruptedStates: "interruptedStates",
     ref: "ref",
     owner: "owner",
     repository: "repository"
