@@ -26,6 +26,8 @@ inputs:
   failureStates:
     description: "semi-colon separated list of states to consider failure, default 'error;failure'"
     required: false
+  interruptedStates:
+    description: "semi-colon separated list of states to consider a 'neutral exit' - neither a failure or success, default: ''"
   ref:
     description: 'ref'
     required: false

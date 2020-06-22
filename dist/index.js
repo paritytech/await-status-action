@@ -575,6 +575,7 @@ var RunResult;
     RunResult["success"] = "success";
     RunResult["failure"] = "failure";
     RunResult["timeout"] = "timeout";
+    RunResult["interrupted"] = "interrupted";
 })(RunResult = exports.RunResult || (exports.RunResult = {}));
 
 
@@ -6334,6 +6335,14 @@ function statusesHasFailure(failureStates, currentStatuses) {
     return false;
 }
 exports.statusesHasFailure = statusesHasFailure;
+function statusesHasInterrupted(interruptedStates, currentStatuses) {
+    let props = Object.getOwnPropertyNames(currentStatuses);
+    if (props.find(propName => interruptedStates.includes(currentStatuses[propName]))) {
+        return true;
+    }
+    return false;
+}
+exports.statusesHasInterrupted = statusesHasInterrupted;
 function statusesAllComplete(completeStates, currentStatuses) {
     let props = Object.getOwnPropertyNames(currentStatuses);
     if (props.find(propName => !completeStates.includes(currentStatuses[propName]))) {
@@ -6697,10 +6706,12 @@ class AwaitRunner {
             let timeout = startTime + inputs.notPresentTimeout * 1000;
             let failed = false;
             let completed = false;
+            let interrupted = false;
             let allPresent = false;
             this.currentStatuses = yield statusFunctions_1.getCurrentStatuses(inputs, this.octokit, this.currentStatuses);
             while (timeout > Date.now()
                 && !(failed = statusFunctions_1.statusesHasFailure(inputs.failureStates, this.currentStatuses))
+                && !(interrupted = statusFunctions_1.statusesHasInterrupted(inputs.interruptedStates, this.currentStatuses))
                 && !(completed = statusFunctions_1.statusesAllComplete(inputs.completeStates, this.currentStatuses))) {
                 yield delay_1.default(inputs.pollInterval * 1000);
                 if (!allPresent && statusFunctions_1.statusesAllPresent(this.currentStatuses)) {
@@ -6709,7 +6720,13 @@ class AwaitRunner {
                 }
                 this.currentStatuses = yield statusFunctions_1.getCurrentStatuses(inputs, this.octokit, this.currentStatuses);
             }
-            return timeout < Date.now() ? RunResult_1.RunResult.timeout : failed ? RunResult_1.RunResult.failure : RunResult_1.RunResult.success;
+            if (timeout < Date.now()) {
+                return RunResult_1.RunResult.timeout;
+            }
+            if (interrupted) {
+                return RunResult_1.RunResult.interrupted;
+            }
+            return RunResult_1.RunResult.success;
         });
     }
 }

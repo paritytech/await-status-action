@@ -11,6 +11,14 @@ export function statusesHasFailure(failureStates: string[], currentStatuses: Che
     return false;
 }
 
+export function statusesHasInterrupted(interruptedStates: string[], currentStatuses: CheckStatus): boolean {
+    let props = Object.getOwnPropertyNames(currentStatuses);
+    if (props.find(propName => interruptedStates.includes(currentStatuses[propName]))) {
+        return true;
+    }
+    return false;
+}
+
 export function statusesAllComplete(completeStates: string[], currentStatuses: CheckStatus) {
     let props = Object.getOwnPropertyNames(currentStatuses);
     if (props.find(propName => !completeStates.includes(currentStatuses[propName]))) {

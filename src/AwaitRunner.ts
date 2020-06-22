@@ -4,7 +4,7 @@ import { Inputs } from "./interfaces/Inputs";
 import { Octokit } from "@octokit/rest";
 import importInputs from "./fn/importInputs";
 import { NOT_PRESENT, OUTPUT_NAMES } from "./constants";
-import { getCurrentStatuses, statusesHasFailure, statusesAllComplete, statusesAllPresent, newCurrentStatuses } from "./fn/statusFunctions";
+import { getCurrentStatuses, statusesHasFailure, statusesHasInterrupted, statusesAllComplete, statusesAllPresent, newCurrentStatuses } from "./fn/statusFunctions";
 import delay from "delay";
 import { ActionsCore } from "./interfaces/ActionsCore";
 
@@ -71,12 +71,14 @@ export class AwaitRunner {
         let timeout = startTime + inputs.notPresentTimeout * 1000;
         let failed: boolean = false;
         let completed: boolean = false;
+        let interrupted: boolean = false;
         let allPresent: boolean = false;
 
         this.currentStatuses = await getCurrentStatuses(inputs, this.octokit, this.currentStatuses);
 
         while (timeout > Date.now()
             && !(failed = statusesHasFailure(inputs.failureStates, this.currentStatuses))
+            && !(interrupted = statusesHasInterrupted(inputs.interruptedStates, this.currentStatuses))
             && !(completed = statusesAllComplete(inputs.completeStates, this.currentStatuses))
         ) {
             await delay(inputs.pollInterval * 1000);
@@ -86,6 +88,12 @@ export class AwaitRunner {
             }
             this.currentStatuses = await getCurrentStatuses(inputs, this.octokit, this.currentStatuses);
         }
-        return timeout < Date.now() ? RunResult.timeout : failed ? RunResult.failure : RunResult.success;
+        if ( timeout < Date.now() ){
+          return RunResult.timeout;
+        }
+        if ( interrupted ){
+          return RunResult.interrupted;
+        }
+        return RunResult.success;
     }
 }
