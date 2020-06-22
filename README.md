@@ -1,4 +1,4 @@
-# Await Status Action <a href="https://github.com/Sibz/await-status-action"><img alt="await-status-action status"   src="https://github.com/Sibz/await-status-action/workflows/test/badge.svg"></a>
+# Await Status Action <a href="https://github.com/s3krit/await-status-action"><img alt="await-status-action status"   src="https://github.com/s3krit/await-status-action/workflows/test/badge.svg"></a>
 
 Waits for a status or multiple statuses to complete or fail.
 
@@ -45,15 +45,22 @@ Semi-colon separated list of states to consider completed successfully
 * `failedStates`  
 **Default: `'failure;error'`**  
 Semi-colon separated list of states to consider failed successfully
+* `interruptedStates`
+**Default: `''`**
+Semi-colon separated list of states to consider interrupted successfully
 
 ### Outputs
 * `result`  
 Either `success`, `failure` or `timeout`
 * `numberOfFailedChecks`  
-Number of checks that were not complete when result is `failure` or `timeout`
+Number of checks that were marked 'failed' when result is `failure`, `interrputed`, or `timeout`
+* `numberOfInterruptedChecks`
+Number of checks that were marked 'interrupted' when result is `failure`, `interrupted`, or `timeout`
 * `failedCheckNames`  
-Semi-colon separated list of check names that were not complete
-* `failedCheckStates`  
+Semi-colon separated list of check names that failed (i.e., resulted in one of the failedStates)
+* `interruptedCheckNames`
+Semi-colon separated list of check names that were interrupted (i.e., resulted in one of the interruptedStates)
+* `checkStates`  
 Semi-colon separated list of check states that were not complete  
 Will be the state of the check unless it wasn't present and timed out  
 One of `success`, `failure`, `error`, `pending` or `not_present`
