@@ -317,7 +317,10 @@ exports.OUTPUT_NAMES = {
     result: "result",
     numberOfFailedChecks: "numberOfFailedChecks",
     failedCheckNames: "failedCheckNames",
-    failedCheckStates: "failedCheckStates"
+    failedCheckStates: "failedCheckStates",
+    numberOfInterruptedChecks: "numberOfInterruptedChecks",
+    interruptedCheckNames: "interruptedCheckNames",
+    interruptedCheckStates: "interruptedCheckStates"
 };
 
 
@@ -6682,10 +6685,12 @@ class AwaitRunner {
             let runResult = yield this.runLoop();
             let runOutput = {
                 failedCheckNames: [],
-                failedCheckStates: []
+                failedCheckStates: [],
+                interruptedCheckNames: [],
+                interruptedCheckStates: []
             };
             if (runResult != RunResult_1.RunResult.success) {
-                this.getRunOutput(runOutput);
+                this.getRunOutput(runOutput, runResult);
             }
             this.core.setOutput(constants_1.OUTPUT_NAMES.result, runResult);
             this.core.setOutput(constants_1.OUTPUT_NAMES.numberOfFailedChecks, runOutput.failedCheckNames.length);
@@ -6693,12 +6698,20 @@ class AwaitRunner {
             this.core.setOutput(constants_1.OUTPUT_NAMES.failedCheckNames, runOutput.failedCheckNames.join(';'));
         });
     }
-    getRunOutput(output) {
+    getRunOutput(output, runResult) {
         this.inputs.contexts.forEach(element => {
             let curStatus = this.currentStatuses[element];
-            if (!this.inputs.completeStates.includes(curStatus) || curStatus == constants_1.NOT_PRESENT) {
-                output.failedCheckNames.push(element);
-                output.failedCheckStates.push(curStatus);
+            if (runResult == RunResult_1.RunResult.failure) {
+                if (!this.inputs.completeStates.includes(curStatus) || curStatus == constants_1.NOT_PRESENT) {
+                    output.failedCheckNames.push(element);
+                    output.failedCheckStates.push(curStatus);
+                }
+            }
+            if (runResult == RunResult_1.RunResult.interrupted) {
+                if (!this.inputs.completeStates.includes(curStatus) || curStatus == constants_1.NOT_PRESENT) {
+                    output.interruptedCheckNames.push(element);
+                    output.interruptedCheckStates.push(curStatus);
+                }
             }
         });
     }
@@ -6728,6 +6741,9 @@ class AwaitRunner {
             }
             if (interrupted) {
                 return RunResult_1.RunResult.interrupted;
+            }
+            if (failed) {
+                return RunResult_1.RunResult.failure;
             }
             return RunResult_1.RunResult.success;
         });

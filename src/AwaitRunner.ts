@@ -42,11 +42,13 @@ export class AwaitRunner {
 
         let runOutput: RunOutput = {
             failedCheckNames: [],
-            failedCheckStates: []
+            failedCheckStates: [],
+            interruptedCheckNames: [],
+            interruptedCheckStates: []
         }
 
         if (runResult != RunResult.success) {
-            this.getRunOutput(runOutput);
+            this.getRunOutput(runOutput, runResult);
         }
 
         this.core.setOutput(OUTPUT_NAMES.result, runResult);
@@ -55,12 +57,20 @@ export class AwaitRunner {
         this.core.setOutput(OUTPUT_NAMES.failedCheckNames, runOutput.failedCheckNames.join(';'));
     }
 
-    private getRunOutput(output:RunOutput) {
+    private getRunOutput(output:RunOutput, runResult:RunResult) {
         this.inputs.contexts.forEach(element => {
             let curStatus = this.currentStatuses[element]
-            if (!this.inputs.completeStates.includes(curStatus) || curStatus == NOT_PRESENT) {
-                output.failedCheckNames.push(element);
-                output.failedCheckStates.push(curStatus);
+            if (runResult == RunResult.failure){
+              if (!this.inputs.completeStates.includes(curStatus) || curStatus == NOT_PRESENT) {
+                  output.failedCheckNames.push(element);
+                  output.failedCheckStates.push(curStatus);
+              }
+            }
+            if (runResult == RunResult.interrupted){
+              if (!this.inputs.completeStates.includes(curStatus) || curStatus == NOT_PRESENT) {
+                  output.interruptedCheckNames.push(element);
+                  output.interruptedCheckStates.push(curStatus);
+              }
             }
         });
     }
@@ -93,6 +103,9 @@ export class AwaitRunner {
         }
         if ( interrupted ){
           return RunResult.interrupted;
+        }
+        if ( failed ) {
+          return RunResult.failure;
         }
         return RunResult.success;
     }
