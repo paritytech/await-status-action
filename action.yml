@@ -26,6 +26,8 @@ inputs:
   failureStates:
     description: "semi-colon separated list of states to consider failure, default 'error;failure'"
     required: false
+  interruptedStates:
+    description: "semi-colon separated list of states to consider a 'neutral exit' - neither a failure or success, default: ''"
   ref:
     description: 'ref'
     required: false
@@ -45,7 +47,9 @@ outputs:
     description: 'number of failing checks'
   failedCheckNames:
     description: "semi-colon separated list of failed checks"
-  failedCheckStates:
+  interruptedCheckNames:
+    description: "semi-colon separated list of interrupted checks"
+  checkStates:
     description: "semi-colon separated list of check results, on timeout will be state or 'not_present'"
 runs:
   using: 'node12'

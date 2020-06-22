@@ -4,7 +4,7 @@ import { Inputs } from "./interfaces/Inputs";
 import { Octokit } from "@octokit/rest";
 import importInputs from "./fn/importInputs";
 import { NOT_PRESENT, OUTPUT_NAMES } from "./constants";
-import { getCurrentStatuses, statusesHasFailure, statusesAllComplete, statusesAllPresent, newCurrentStatuses } from "./fn/statusFunctions";
+import { getCurrentStatuses, statusesHasFailure, statusesHasInterrupted, statusesAllComplete, statusesAllPresent, newCurrentStatuses } from "./fn/statusFunctions";
 import delay from "delay";
 import { ActionsCore } from "./interfaces/ActionsCore";
 
@@ -42,25 +42,35 @@ export class AwaitRunner {
 
         let runOutput: RunOutput = {
             failedCheckNames: [],
-            failedCheckStates: []
+            interruptedCheckNames: [],
+            checkStates: []
         }
 
         if (runResult != RunResult.success) {
-            this.getRunOutput(runOutput);
+            this.getRunOutput(runOutput, runResult);
         }
 
         this.core.setOutput(OUTPUT_NAMES.result, runResult);
+        this.core.setOutput(OUTPUT_NAMES.checkStates, runOutput.checkStates.join(';'));
         this.core.setOutput(OUTPUT_NAMES.numberOfFailedChecks, runOutput.failedCheckNames.length);
-        this.core.setOutput(OUTPUT_NAMES.failedCheckStates, runOutput.failedCheckStates.join(';'));
+        this.core.setOutput(OUTPUT_NAMES.numberOfInterruptedChecks, runOutput.interruptedCheckNames.length);
         this.core.setOutput(OUTPUT_NAMES.failedCheckNames, runOutput.failedCheckNames.join(';'));
+        this.core.setOutput(OUTPUT_NAMES.interruptedCheckNames, runOutput.interruptedCheckNames.join(';'));
     }
 
-    private getRunOutput(output:RunOutput) {
+    private getRunOutput(output:RunOutput, runResult:RunResult) {
         this.inputs.contexts.forEach(element => {
             let curStatus = this.currentStatuses[element]
-            if (!this.inputs.completeStates.includes(curStatus) || curStatus == NOT_PRESENT) {
-                output.failedCheckNames.push(element);
-                output.failedCheckStates.push(curStatus);
+            output.checkStates.push(curStatus);
+            if (runResult == RunResult.failure){
+              if (!this.inputs.completeStates.includes(curStatus) || curStatus == NOT_PRESENT) {
+                  output.failedCheckNames.push(element);
+              }
+            }
+            if (runResult == RunResult.interrupted){
+              if (!this.inputs.completeStates.includes(curStatus) || curStatus == NOT_PRESENT) {
+                  output.interruptedCheckNames.push(element);
+              }
             }
         });
     }
@@ -71,12 +81,14 @@ export class AwaitRunner {
         let timeout = startTime + inputs.notPresentTimeout * 1000;
         let failed: boolean = false;
         let completed: boolean = false;
+        let interrupted: boolean = false;
         let allPresent: boolean = false;
 
         this.currentStatuses = await getCurrentStatuses(inputs, this.octokit, this.currentStatuses);
 
         while (timeout > Date.now()
             && !(failed = statusesHasFailure(inputs.failureStates, this.currentStatuses))
+            && !(interrupted = statusesHasInterrupted(inputs.interruptedStates, this.currentStatuses))
             && !(completed = statusesAllComplete(inputs.completeStates, this.currentStatuses))
         ) {
             await delay(inputs.pollInterval * 1000);
@@ -86,6 +98,15 @@ export class AwaitRunner {
             }
             this.currentStatuses = await getCurrentStatuses(inputs, this.octokit, this.currentStatuses);
         }
-        return timeout < Date.now() ? RunResult.timeout : failed ? RunResult.failure : RunResult.success;
+        if ( timeout < Date.now() ){
+          return RunResult.timeout;
+        }
+        if ( interrupted ){
+          return RunResult.interrupted;
+        }
+        if ( failed ) {
+          return RunResult.failure;
+        }
+        return RunResult.success;
     }
 }

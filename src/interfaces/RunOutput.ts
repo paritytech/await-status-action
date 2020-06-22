@@ -1,4 +1,5 @@
 interface RunOutput {
     failedCheckNames: string[],
-    failedCheckStates: string[]
+    interruptedCheckNames: string[],
+    checkStates: string[]
 }

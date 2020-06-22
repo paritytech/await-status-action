@@ -308,6 +308,7 @@ exports.INPUT_NAMES = {
     pollInterval: "pollInterval",
     completeStates: "completeStates",
     failureStates: "failureStates",
+    interruptedStates: "interruptedStates",
     ref: "ref",
     owner: "owner",
     repository: "repository"
@@ -316,7 +317,9 @@ exports.OUTPUT_NAMES = {
     result: "result",
     numberOfFailedChecks: "numberOfFailedChecks",
     failedCheckNames: "failedCheckNames",
-    failedCheckStates: "failedCheckStates"
+    numberOfInterruptedChecks: "numberOfInterruptedChecks",
+    interruptedCheckNames: "interruptedCheckNames",
+    checkStates: "checkStates"
 };
 
 
@@ -575,6 +578,7 @@ var RunResult;
     RunResult["success"] = "success";
     RunResult["failure"] = "failure";
     RunResult["timeout"] = "timeout";
+    RunResult["interrupted"] = "interrupted";
 })(RunResult = exports.RunResult || (exports.RunResult = {}));
 
 
@@ -686,7 +690,8 @@ exports.DEFAULTS = {
     notPresentTimeout: 300,
     pollInterval: 10,
     completeStates: ['success'],
-    failureStates: ['error', 'failure']
+    failureStates: ['error', 'failure'],
+    interruptedStates: []
 };
 function importInputs(testActionsCore = null) {
     var _a;
@@ -699,6 +704,7 @@ function importInputs(testActionsCore = null) {
         pollInterval: getNumber(core, constants_1.INPUT_NAMES.pollInterval, exports.DEFAULTS.pollInterval),
         completeStates: getStringArrayOrDefault(core, constants_1.INPUT_NAMES.completeStates, exports.DEFAULTS.completeStates),
         failureStates: getStringArrayOrDefault(core, constants_1.INPUT_NAMES.failureStates, exports.DEFAULTS.failureStates),
+        interruptedStates: getStringArrayOrDefault(core, constants_1.INPUT_NAMES.interruptedStates, exports.DEFAULTS.interruptedStates),
         ref: getString(core, constants_1.INPUT_NAMES.ref),
         owner: getString(core, constants_1.INPUT_NAMES.owner),
         repository: getString(core, constants_1.INPUT_NAMES.repository)
@@ -6334,6 +6340,14 @@ function statusesHasFailure(failureStates, currentStatuses) {
     return false;
 }
 exports.statusesHasFailure = statusesHasFailure;
+function statusesHasInterrupted(interruptedStates, currentStatuses) {
+    let props = Object.getOwnPropertyNames(currentStatuses);
+    if (props.find(propName => interruptedStates.includes(currentStatuses[propName]))) {
+        return true;
+    }
+    return false;
+}
+exports.statusesHasInterrupted = statusesHasInterrupted;
 function statusesAllComplete(completeStates, currentStatuses) {
     let props = Object.getOwnPropertyNames(currentStatuses);
     if (props.find(propName => !completeStates.includes(currentStatuses[propName]))) {
@@ -6670,23 +6684,33 @@ class AwaitRunner {
             let runResult = yield this.runLoop();
             let runOutput = {
                 failedCheckNames: [],
-                failedCheckStates: []
+                interruptedCheckNames: [],
+                checkStates: []
             };
             if (runResult != RunResult_1.RunResult.success) {
-                this.getRunOutput(runOutput);
+                this.getRunOutput(runOutput, runResult);
             }
             this.core.setOutput(constants_1.OUTPUT_NAMES.result, runResult);
+            this.core.setOutput(constants_1.OUTPUT_NAMES.checkStates, runOutput.checkStates.join(';'));
             this.core.setOutput(constants_1.OUTPUT_NAMES.numberOfFailedChecks, runOutput.failedCheckNames.length);
-            this.core.setOutput(constants_1.OUTPUT_NAMES.failedCheckStates, runOutput.failedCheckStates.join(';'));
+            this.core.setOutput(constants_1.OUTPUT_NAMES.numberOfInterruptedChecks, runOutput.interruptedCheckNames.length);
             this.core.setOutput(constants_1.OUTPUT_NAMES.failedCheckNames, runOutput.failedCheckNames.join(';'));
+            this.core.setOutput(constants_1.OUTPUT_NAMES.interruptedCheckNames, runOutput.interruptedCheckNames.join(';'));
         });
     }
-    getRunOutput(output) {
+    getRunOutput(output, runResult) {
         this.inputs.contexts.forEach(element => {
             let curStatus = this.currentStatuses[element];
-            if (!this.inputs.completeStates.includes(curStatus) || curStatus == constants_1.NOT_PRESENT) {
-                output.failedCheckNames.push(element);
-                output.failedCheckStates.push(curStatus);
+            output.checkStates.push(curStatus);
+            if (runResult == RunResult_1.RunResult.failure) {
+                if (!this.inputs.completeStates.includes(curStatus) || curStatus == constants_1.NOT_PRESENT) {
+                    output.failedCheckNames.push(element);
+                }
+            }
+            if (runResult == RunResult_1.RunResult.interrupted) {
+                if (!this.inputs.completeStates.includes(curStatus) || curStatus == constants_1.NOT_PRESENT) {
+                    output.interruptedCheckNames.push(element);
+                }
             }
         });
     }
@@ -6697,10 +6721,12 @@ class AwaitRunner {
             let timeout = startTime + inputs.notPresentTimeout * 1000;
             let failed = false;
             let completed = false;
+            let interrupted = false;
             let allPresent = false;
             this.currentStatuses = yield statusFunctions_1.getCurrentStatuses(inputs, this.octokit, this.currentStatuses);
             while (timeout > Date.now()
                 && !(failed = statusFunctions_1.statusesHasFailure(inputs.failureStates, this.currentStatuses))
+                && !(interrupted = statusFunctions_1.statusesHasInterrupted(inputs.interruptedStates, this.currentStatuses))
                 && !(completed = statusFunctions_1.statusesAllComplete(inputs.completeStates, this.currentStatuses))) {
                 yield delay_1.default(inputs.pollInterval * 1000);
                 if (!allPresent && statusFunctions_1.statusesAllPresent(this.currentStatuses)) {
@@ -6709,7 +6735,16 @@ class AwaitRunner {
                 }
                 this.currentStatuses = yield statusFunctions_1.getCurrentStatuses(inputs, this.octokit, this.currentStatuses);
             }
-            return timeout < Date.now() ? RunResult_1.RunResult.timeout : failed ? RunResult_1.RunResult.failure : RunResult_1.RunResult.success;
+            if (timeout < Date.now()) {
+                return RunResult_1.RunResult.timeout;
+            }
+            if (interrupted) {
+                return RunResult_1.RunResult.interrupted;
+            }
+            if (failed) {
+                return RunResult_1.RunResult.failure;
+            }
+            return RunResult_1.RunResult.success;
         });
     }
 }

@@ -1,5 +1,6 @@
 export enum RunResult{ 
     success = "success",
     failure = "failure",
-    timeout = "timeout"
+    timeout = "timeout",
+    interrupted = "interrupted"
 }
