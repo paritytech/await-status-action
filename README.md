@@ -42,7 +42,7 @@ If you need to return `pending` state as either complete or failed, you can add 
 * `completeStates`  
 **Default `'success'`**  
 Semi-colon separated list of states to consider completed successfully
-* `failedStates`  
+* `failureStates`  
 **Default: `'failure;error'`**  
 Semi-colon separated list of states to consider failed successfully
 * `interruptedStates`
@@ -57,7 +57,7 @@ Number of checks that were marked 'failed' when result is `failure`, `interrpute
 * `numberOfInterruptedChecks`
 Number of checks that were marked 'interrupted' when result is `failure`, `interrupted`, or `timeout`
 * `failedCheckNames`  
-Semi-colon separated list of check names that failed (i.e., resulted in one of the failedStates)
+Semi-colon separated list of check names that failed (i.e., resulted in one of the failureStates)
 * `interruptedCheckNames`
 Semi-colon separated list of check names that were interrupted (i.e., resulted in one of the interruptedStates)
 * `checkStates`  
